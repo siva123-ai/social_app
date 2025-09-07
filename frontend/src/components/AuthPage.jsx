@@ -1,31 +1,28 @@
 import React, { useState } from 'react';
 import { login, register } from '../services/authService';
-import useAuthStore from '../store/authStore';
 
-const AuthPage = () => {
+const AuthPage = ({ setAuth }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { setAuth } = useAuthStore();
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      let data;
-      if (isLogin) {
-        data = await login(email, password);
-      } else {
-        data = await register(username, email, password);
-      }
-      setAuth(data.token, data.userId);
-    } catch (error) {
-      console.error('Authentication failed:', error);
+      const data = isLogin
+        ? await login(email, password)
+        : await register(username, email, password);
+      setAuth(data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Authentication failed');
     }
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-page">
       <h2>{isLogin ? 'Login' : 'Register'}</h2>
       <form onSubmit={handleSubmit}>
         {!isLogin && (
@@ -34,7 +31,6 @@ const AuthPage = () => {
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            required
           />
         )}
         <input
@@ -42,20 +38,19 @@ const AuthPage = () => {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
         />
         <button type="submit">{isLogin ? 'Login' : 'Register'}</button>
       </form>
-      <div className="toggle-auth" onClick={() => setIsLogin(!isLogin)}>
+      {error && <p className="error">{error}</p>}
+      <button onClick={() => setIsLogin(!isLogin)}>
         {isLogin ? 'Need an account? Register' : 'Have an account? Login'}
-      </div>
+      </button>
     </div>
   );
 };
